@@ -98,10 +98,10 @@ for epoch in range(1, EPOCH+1):
         data = data.to(device)
         PINNsModel.train(data)
         print("Batch", i, "has been used in training")
-    if((epoch%50) == 0):
+    if((epoch % 50) == 0):
         PINNsModel.lr *= 0.9
     print("Epoch", epoch, "has finished, and the current learning rate is", PINNsModel.lr)
-torch.save(PINNsModel, "./wave equation net.pkl")
+torch.save(PINNsModel.state_dict(), "./wave equation net.pkl")
 
 #编写目标函数解析式及绘图
 def u(t, x):
@@ -121,7 +121,7 @@ for i in range(0, x_slice):
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(T, X, Z, cmap=cm.YlGnBu_r)
-plt.show()
+plt.savefig("wave equation[exact solution].pdf")
 
 #绘制拟合函数图像并创建测试集对比训练结果与目标函数的差异
 x_slice = 100
@@ -137,7 +137,7 @@ for i in range(0, x_slice):
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(T, X, Z, cmap=cm.YlGnBu_r)
-plt.show()
+plt.savefig("wave equation[fitting solution].pdf")
 error = []
 for i in range(1, 10001):
     t = random.uniform(0, 2)

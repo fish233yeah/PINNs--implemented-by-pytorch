@@ -18,10 +18,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #device = "cpu"    #若需要使用CPU训练，去掉此行首部注释符号'#'即可
 print("Training device:", device)
 
-EPOCH = 210
-BATCH_SIZE = 500
+EPOCH = 50
+BATCH_SIZE = 100
 
-a = 1
+a = 0.3
 l = (3*(math.pi))/4.0
 h = 1.0
 
@@ -32,21 +32,27 @@ class PINNs(nn.Module):
         super().__init__()
         #定义网络各层
         self.model = nn.Sequential(
-            nn.Linear(2, 300),
+            nn.Linear(2, 100),
             nn.Tanh(),
-            nn.Linear(300, 300),
+            nn.Linear(100, 100),
             nn.Tanh(),
-            nn.Linear(300, 300),
+            nn.Linear(100, 100),
             nn.Tanh(),
-            nn.Linear(300, 300),
+            nn.Linear(100, 100),
             nn.Tanh(),
-            nn.Linear(300, 1)
+            nn.Linear(100, 100),
+            nn.Tanh(),
+            nn.Linear(100, 100),
+            nn.Tanh(),
+            nn.Linear(100, 100),
+            nn.Tanh(),
+            nn.Linear(100, 1)
         )
         #定义求解过程中需要优化的参数
         mylambda = torch.rand((1, 1), requires_grad=True)
         self.mylambda = nn.Parameter(mylambda)
         #定义优化器
-        self.lr = 0.1
+        self.lr = 0.05
         self.optimiser = torch.optim.LBFGS(self.parameters(), lr=self.lr)
 
     def forward(self, inputs):
@@ -107,17 +113,17 @@ def u(t, x):
 temptrainlist=[]
     #内部取样点
 for i in range(0, 10000):
-    t = random.uniform(0, 5)
+    t = random.uniform(5, 10)
     x = random.uniform(0, l)
     z = u(t, x)
     temptrainlist.append([t, x, z])
     #三侧边缘随机取样点
 for i in range(0, 2000):
-    t = random.uniform(0, 5)
+    t = random.uniform(5, 10)
     z = u(t, 0)
     temptrainlist.append([t, 0, z])
 for i in range(0, 2000):
-    t = random.uniform(0, 5)
+    t = random.uniform(5, 10)
     z = u(t, l)
     temptrainlist.append([t, l, z])
 for i in range(0, 2000):
@@ -135,15 +141,15 @@ for epoch in range(1, EPOCH+1):
         data=data.to(device)
         PINNsModel.train(data)
         print("Batch", i, "has been used in training")
-    if((epoch%15) == 0):
+    if((epoch % 10) == 0):
         PINNsModel.lr *= 0.9
     print("Epoch", epoch, "has finished, and the current learning rate is", PINNsModel.lr)
-torch.save(PINNsModel, "./heat equation net.pkl")
+torch.save(PINNsModel.state_dict(), "./heat equation net.pkl")
 
 #绘制精确解图像
 x_slice = 100
 y_slice = 100
-t = np.linspace(0, 5, x_slice, dtype=np.float32)
+t = np.linspace(5, 10, x_slice, dtype=np.float32)
 x = np.linspace(0, l, y_slice, dtype=np.float32)
 T, X = np.meshgrid(t, x)
 Z = np.array(np.arange(0, 1, (1.0/(x_slice*y_slice)))).reshape(x_slice, y_slice)
@@ -154,12 +160,12 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(T, X, Z, cmap=cm.YlGnBu_r)
 ax.set_zlim3d(0, 2)
-plt.show()
+plt.savefig("heat equation[exact solution].pdf")
 
 #绘制拟合函数图像并创建测试集对比训练结果与目标函数的差异
 x_slice = 100
 y_slice = 100
-t = np.linspace(0, 5, x_slice, dtype=np.float32)
+t = np.linspace(5, 10, x_slice, dtype=np.float32)
 x = np.linspace(0, l, y_slice, dtype=np.float32)
 T, X = np.meshgrid(t, x)
 Z = np.array(np.arange(0, 1, (1.0/(x_slice*y_slice)))).reshape(x_slice, y_slice)
@@ -171,12 +177,13 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(T, X, Z, cmap=cm.YlGnBu_r)
 ax.set_zlim3d(0, 2)
-plt.show()
+plt.savefig("heat equation[fitting solution].pdf")
 error = []
 for i in range(1, 10001):
-    t = random.uniform(0, 5)
+    t = random.uniform(5, 10)
     x = random.uniform(0, l)
     temp = torch.tensor([t, x], requires_grad=True).to(device)
     error.append((PINNsModel.forward(temp).tolist()[0]-u(t, x))**2)
 print("Mean squared error of the model:", np.mean(error))
-print("Error of the pending parameters:", a-((PINNsModel.mylambda[0]).tolist()[0]))
+print("Pending parameter:", (PINNsModel.mylambda[0]).tolist()[0])
+print("Error of the pending parameter:", a-((PINNsModel.mylambda[0]).tolist()[0]))
