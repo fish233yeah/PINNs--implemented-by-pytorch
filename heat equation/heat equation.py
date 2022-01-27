@@ -128,7 +128,7 @@ for i in range(0, 2000):
     temptrainlist.append([t, l, z])
 for i in range(0, 2000):
     x = random.uniform(0, l)
-    z = u(0, x)
+    z = u(5, x)
     temptrainlist.append([0, x, z])
 trainlist = torch.tensor(temptrainlist, requires_grad=True)
 train_loader = Data.DataLoader(dataset=trainlist, batch_size=BATCH_SIZE, shuffle=True)

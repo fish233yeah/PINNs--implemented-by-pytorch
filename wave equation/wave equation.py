@@ -49,7 +49,7 @@ class PINNs(nn.Module):
         self.u_tt_xx = torch.autograd.grad(outputs=self.u_t_x, inputs=inputs, grad_outputs=torch.ones_like(self.u_t_x), retain_graph=True, create_graph=True, only_inputs=True, allow_unused=True)[0]
         self.temp_1 = torch.tensor([[1.0], [0.0]], requires_grad=True).to(device)
         self.temp_2 = torch.tensor([[0.0], [1.0]], requires_grad=True).to(device)
-        self.f = torch.mm(self.u_tt_xx, self.temp_1)-torch.mm(self.u_tt_xx, self.temp_2)-(b*torch.sinh(torch.mm(inputs, self.temp_2)))
+        self.f = torch.mm(self.u_tt_xx, self.temp_1)-((a**2)*torch.mm(self.u_tt_xx, self.temp_2))-(b*torch.sinh(torch.mm(inputs, self.temp_2)))
         self.temp_3 = torch.tensor([[1.0, 0.0], [0.0, 0.0]], requires_grad=True).to(device)
         self.temp_4 = torch.tensor([[0.0, 0.0], [0.0, 1.0]], requires_grad=True).to(device)
         self.u_xtozero = torch.mm(inputs, self.temp_3)
